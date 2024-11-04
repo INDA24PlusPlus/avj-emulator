@@ -1,6 +1,6 @@
 #include <instructions.h>
 
-Instruction matchOpCode(instruction_t raw_instruction)
+Instruction match_op_code(instruction_t raw_instruction)
 {
     // look at first 6 bits to determine op type
     uint8_t op = (raw_instruction >> 26) & 0x3F;
@@ -165,9 +165,9 @@ Instruction matchOpCode(instruction_t raw_instruction)
     }
 }
 
-void decodeInstructions(InstructionType *instructs, instruction_t raw_instruction)
+void decode_instructions(InstructionType *instructs, instruction_t raw_instruction)
 {
-    Instruction parsed_instruction = matchOpCode(raw_instruction);
+    Instruction parsed_instruction = match_op_code(raw_instruction);
 
     if (parsed_instruction.format == R)
     {

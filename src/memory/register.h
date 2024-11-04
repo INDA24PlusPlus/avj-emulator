@@ -1,3 +1,12 @@
 #include <stdint.h>
 
-typedef uint32_t Register;
+typedef struct
+{
+    uint32_t value;
+    int is_constant;
+} Register;
+
+uint32_t load(Register *reg);
+void store(Register *reg, uint32_t value);
+
+#define REGISTER_SIZE 32;
