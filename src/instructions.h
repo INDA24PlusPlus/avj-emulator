@@ -1,4 +1,6 @@
 #include <stdint.h>
+#ifndef INSTRUCTIONS_H
+#define INSTRUCTIONS_H
 typedef enum
 {
     ADD,
@@ -13,7 +15,7 @@ typedef enum
     // Jump instructions
     JALR,
     JR,
-    J,
+    JUMP,
     JAL,
     // Load instructions
     LB,
@@ -67,3 +69,7 @@ enum PseudoInstructions
     NOOP,
     MOVE
 };
+
+Instruction match_op_code(instruction_t raw_instruction);
+
+#endif

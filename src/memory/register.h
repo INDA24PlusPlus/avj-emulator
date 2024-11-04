@@ -1,5 +1,6 @@
 #include <stdint.h>
-
+#ifndef REGISTER_H
+#define REGISTER_H
 typedef struct
 {
     uint32_t value;
@@ -10,3 +11,5 @@ uint32_t load(Register *reg);
 void store(Register *reg, uint32_t value);
 
 #define REGISTER_SIZE 32;
+
+#endif

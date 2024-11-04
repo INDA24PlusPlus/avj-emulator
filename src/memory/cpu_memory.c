@@ -1,5 +1,5 @@
-#include <cpu_memory.h>
-#include <register.h>
+#include "cpu_memory.h"
+#include "register.h"
 #include <stdlib.h>
 
 // Initialize everything to zero
@@ -40,9 +40,9 @@ uint32_t load_memory(CPUMemory *memory, int register_number)
 {
     if (register_number > 31)
     {
-        return;
+        exit(-1);
     }
 
-    uint32_t value = (&(memory->registers[register_number]));
+    uint32_t value = ((memory->registers[register_number]).value);
     return value;
 }
