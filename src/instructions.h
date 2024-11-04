@@ -1,4 +1,4 @@
-
+#include <stdint.h>
 typedef enum
 {
     ADD,
@@ -6,6 +6,7 @@ typedef enum
     ADDIU,
     ADDU,
     AND,
+    ANDI,
     // Branch instruction
     BEQ,
     BNE,
@@ -20,6 +21,7 @@ typedef enum
     LUI,
     LW,
     MUL,
+    MULU,
     NOR,
     OR,
     ORI,
@@ -40,7 +42,22 @@ typedef enum
     SUBU,
     XOR,
     XORI
-} Instructions;
+} InstructionType;
+
+typedef enum
+{
+    R,
+    I,
+    J
+} InstructionFormat;
+
+typedef struct
+{
+    InstructionType type;
+    InstructionFormat format;
+} Instruction;
+
+typedef uint32_t instruction_t;
 
 enum PseudoInstructions
 {
