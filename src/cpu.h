@@ -5,7 +5,9 @@
 
 typedef struct
 {
+    // Refererar egentligen till registrena men orkar inte byta namn nu
     CPUMemory memory;
+    uint8_t *ram;
 } CPU;
 
 CPU init_cpu();

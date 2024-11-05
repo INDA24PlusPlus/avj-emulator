@@ -36,13 +36,13 @@ void set_memory(CPUMemory *memory, int register_number, int32_t value)
     store(&(memory->registers[register_number]), value);
 }
 
-uint32_t load_memory(CPUMemory *memory, int register_number)
+int32_t load_memory(CPUMemory *memory, int register_number)
 {
     if (register_number > 31)
     {
         exit(-1);
     }
 
-    uint32_t value = ((memory->registers[register_number]).value);
+    int32_t value = ((memory->registers[register_number]).value);
     return value;
 }
