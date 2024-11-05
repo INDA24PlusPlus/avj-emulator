@@ -26,7 +26,7 @@ CPUMemory initialize_memory()
     return memory;
 }
 
-void set_memory(CPUMemory *memory, int register_number, uint32_t value)
+void set_memory(CPUMemory *memory, int register_number, int32_t value)
 {
     if (register_number > 31)
     {

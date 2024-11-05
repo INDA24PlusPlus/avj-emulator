@@ -7,9 +7,33 @@
 #include <stdio.h>
 #include <stdint.h>
 
-int addition_overflow(uint32_t a, uint32_t b)
+int addition_overflow(int32_t a, int32_t b)
 {
-    if (UINT32_MAX - a < b)
+    if (INT32_MAX - a < b)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int multiplication_overflow(int32_t a, int32_t b)
+{
+    if (INT32_MAX / a < b)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int subtraction_overflow(int32_t a, int32_t b)
+{
+    if (INT32_MAX + a < b)
     {
         return 1;
     }
@@ -38,26 +62,126 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
         // Shift amount
         uint8_t shamt = (raw_instruction >> 6) & 0x1F;
 
-        uint32_t rs_value = load_memory(&cpu->memory, rs);
-        uint32_t rt_value = load_memory(&cpu->memory, rt);
+        int32_t rs_value = load_memory(&cpu->memory, rs);
+        int32_t rt_value = load_memory(&cpu->memory, rt);
 
         switch (parsed_instruction.type)
         {
         case ADD:
         {
-            if (addition_overflow(rs_value, rt_value))
+            if (addition_overflow(rs_value, rt_value) == 1)
             {
                 printf("ERROR: Addition overflow for registers %d and %d", rs, rt);
                 exit(-1);
             };
-            uint32_t sum = rs_value + rt_value;
+            int32_t sum = rs_value + rt_value;
             set_memory(&cpu->memory, rd, sum);
             break;
         }
         case ADDU:
         {
-            uint32_t sum = rs_value + rt_value;
+            int32_t sum = rs_value + rt_value;
             set_memory(&cpu->memory, rd, sum);
+        }
+        case AND:
+        {
+            int32_t result = rs_value & rt_value;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case JALR:
+        {
+        }
+        case JR:
+        {
+        }
+        case MUL:
+        {
+            if (multiplication_overflow(rs_value, rt_value))
+            {
+                printf("ERROR: Multiplication overflow for registers %d and %d", rs, rt);
+                exit(-1);
+            }
+            int32_t product = rs_value * rt_value;
+            set_memory(&cpu->memory, rd, product);
+        }
+        case NOR:
+        {
+            int32_t result = !(rt_value | rs_value);
+            set_memory(&cpu->memory, rd, result);
+        }
+        case OR:
+        {
+            int32_t result = (rt_value | rs_value);
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SLT:
+        {
+            if (rs_value < rt_value)
+            {
+                set_memory(&cpu->memory, rd, 1);
+            }
+            else
+            {
+                set_memory(&cpu->memory, rd, 0);
+            }
+        }
+
+        case SLTU:
+        {
+            if (rs_value < rt_value)
+            {
+                set_memory(&cpu->memory, rd, 1);
+            }
+            else
+            {
+                set_memory(&cpu->memory, rd, 0);
+            }
+        }
+        case SLL:
+        {
+            int32_t result = rt_value << shamt;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SLLV:
+        {
+            int32_t result = rt_value << rs_value;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SRA:
+        {
+            // borde göra unsigned right shift men finns endast vanlig right shift
+            int32_t result = rt_value >> shamt;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SRL:
+        {
+            int32_t result = rt_value >> shamt;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SRLV:
+        {
+            int32_t result = rt_value >> rs_value;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SUB:
+        {
+            if (subtraction_overflow(rs_value, rt_value) == 1)
+            {
+                printf("ERROR: Addition overflow for registers %d and %d", rs, rt);
+                exit(-1);
+            }
+            int32_t result = rs_value - rt_value;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case SUBU:
+        {
+            int32_t result = rs_value - rt_value;
+            set_memory(&cpu->memory, rd, result);
+        }
+        case XOR:
+        {
+            int32_t result = rs_value ^ rt_value;
+            set_memory(&cpu->memory, rd, result);
         }
         default:
             break;

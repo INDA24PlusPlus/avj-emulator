@@ -3,12 +3,12 @@
 #define REGISTER_H
 typedef struct
 {
-    uint32_t value;
+    int32_t value;
     int is_constant;
 } Register;
 
-uint32_t load(Register *reg);
-void store(Register *reg, uint32_t value);
+int32_t load(Register *reg);
+void store(Register *reg, int32_t value);
 
 #define REGISTER_SIZE 32;
 

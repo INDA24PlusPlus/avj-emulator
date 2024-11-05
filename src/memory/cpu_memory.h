@@ -8,7 +8,7 @@ typedef struct
     Register *registers;
 } CPUMemory;
 
-void set_memory(CPUMemory *memory, int register_number, uint32_t value);
+void set_memory(CPUMemory *memory, int register_number, int32_t value);
 uint32_t load_memory(CPUMemory *memory, int register_number);
 CPUMemory initialize_memory();
 
