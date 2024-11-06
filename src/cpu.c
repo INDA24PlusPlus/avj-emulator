@@ -43,6 +43,18 @@ int subtraction_overflow(int32_t a, int32_t b)
     }
 }
 
+void find_label(Label *label, CPU *cpu, uint32_t label_identifier)
+{
+
+    for (int i = 0; i < cpu->n_labels; i++)
+    {
+        if (cpu->labels[i].identifier == label_identifier)
+        {
+            label = &(cpu->labels[i]);
+        }
+    }
+}
+
 int32_t sign_extended(int16_t value)
 {
     return (int32_t)value;
@@ -63,12 +75,26 @@ uint32_t zero_extension_u16(uint16_t value)
     return (uint32_t)value;
 }
 
-CPU init_cpu()
+CPU init_cpu(instruction_t *program)
 {
     CPUMemory memory = initialize_memory();
     uint8_t ram = malloc(sizeof(uint8_t) * 4096);
-    CPU cpu = {.memory = memory, .ram = ram};
+    CPU cpu = {
+        .memory = memory,
+        .ram = ram,
+        .program = program,
+        .program_counter = 0};
     return cpu;
+}
+
+void run_program(CPU *cpu)
+{
+    int program_length = sizeof(instruction_t) / cpu->program[0];
+
+    while (cpu->program_counter != program_length)
+    {
+        execute_instruction(cpu, cpu->program[cpu->program_counter]);
+    }
 }
 
 void execute_instruction(CPU *cpu, instruction_t raw_instruction)
@@ -111,9 +137,13 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
         }
         case JALR:
         {
+            // 31 refers to $ra register
+            set_memory(&cpu->memory, 31, cpu->program_counter + 4);
+            cpu->program_counter = rs_value;
         }
         case JR:
         {
+            cpu->program_counter = rs_value;
         }
         case MUL:
         {
@@ -239,6 +269,22 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             int32_t result = rs_value & sign_extended(immediate);
             set_memory(&cpu->memory, rt, result);
         }
+        case BEQ:
+        {
+            if (rs_value == rt_value)
+            {
+                uint32_t bta = cpu->program_counter + 4 + (sign_extended(immediate) * 4);
+                cpu->program_counter = bta;
+            }
+        }
+        case BNE:
+        {
+            if (rs_value != rt_value)
+            {
+                uint32_t bta = cpu->program_counter + 4 + (sign_extended(immediate) * 4);
+                cpu->program_counter = bta;
+            }
+        }
         case LB:
         {
             int address = rs_value + sign_extended(immediate);
@@ -315,5 +361,31 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
     else if (parsed_instruction.format == J)
     {
         uint32_t address = raw_instruction & ((1U << 26) - 1);
+
+        switch (parsed_instruction.type)
+        {
+        case JUMP:
+        {
+            // JTA = concat((PC + 4), address(label), 00)
+            // PC = JTA
+            uint32_t pc_bits = (cpu->program_counter >> 28) & 0xF;
+            Label l = {};
+            find_label(&l, cpu, address);
+            uint32_t jta = (pc_bits << 28) | (l.address << 2);
+            cpu->program_counter = jta;
+        }
+        case JAL:
+        {
+            uint32_t pc_bits = (cpu->program_counter >> 28) & 0xF;
+            Label l = {};
+            find_label(&l, cpu, address);
+            uint32_t jta = (pc_bits << 28) | (l.address << 2);
+            cpu->program_counter = jta;
+            set_memory(&cpu->memory, 31, cpu->program_counter + 4);
+        }
+
+        default:
+            break;
+        }
     }
 }
