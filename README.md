@@ -1,6 +1,6 @@
 # Emulator MIPS
 
-Emulator för en tidig MIPS processor. Implementerad enligt ISA.pdf
+Emulator för en tidig MIPS processor i.e MIPS I, II, III. Implementerad enligt ISA.pdf
 
 ## Exempel program
 
