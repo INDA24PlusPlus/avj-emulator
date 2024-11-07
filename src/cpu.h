@@ -16,13 +16,16 @@ typedef struct
     // detta är då det "riktiga" minnet
     uint8_t *ram;
     instruction_t *program;
+    int program_length;
     uint32_t program_counter;
     // Label sparar alla ställen där en label har placerats
     Label *labels;
     int n_labels;
+
 } CPU;
 
 CPU init_cpu(instruction_t *program);
+void run_program(CPU *cpu);
 
 void execute_instruction(CPU *cpu, instruction_t raw_instruction);
 #endif

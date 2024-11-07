@@ -11,7 +11,7 @@ Instruction match_op_code(instruction_t raw_instruction)
 
         // special instruction, need to look at func_t
         // last 6 bits
-        uint8_t func_t = (raw_instruction >> 6) & 0x3F;
+        uint8_t func_t = (raw_instruction >> 7) & 0x3F;
 
         switch (func_t)
         {

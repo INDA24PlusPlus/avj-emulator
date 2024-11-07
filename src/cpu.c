@@ -50,7 +50,9 @@ void find_label(Label *label, CPU *cpu, uint32_t label_identifier)
     {
         if (cpu->labels[i].identifier == label_identifier)
         {
-            label = &(cpu->labels[i]);
+            label->identifier = cpu->labels[i].identifier;
+            label->address = cpu->labels[i].address;
+            break;
         }
     }
 }
@@ -78,7 +80,7 @@ uint32_t zero_extension_u16(uint16_t value)
 CPU init_cpu(instruction_t *program)
 {
     CPUMemory memory = initialize_memory();
-    uint8_t ram = malloc(sizeof(uint8_t) * 4096);
+    uint8_t *ram = malloc(sizeof(uint8_t) * 4096);
     CPU cpu = {
         .memory = memory,
         .ram = ram,
@@ -89,18 +91,19 @@ CPU init_cpu(instruction_t *program)
 
 void run_program(CPU *cpu)
 {
-    int program_length = sizeof(instruction_t) / cpu->program[0];
-
-    while (cpu->program_counter != program_length)
+    while (cpu->program_counter < cpu->program_length)
     {
         execute_instruction(cpu, cpu->program[cpu->program_counter]);
+        /* int32_t result = load_memory(&cpu->memory, 9);
+        printf("Result: %d \n", result); */
     }
 }
 
 void execute_instruction(CPU *cpu, instruction_t raw_instruction)
 {
     Instruction parsed_instruction = match_op_code(raw_instruction);
-
+    printf("Program counter: %d \n", cpu->program_counter);
+    printf("Parsed instruction: %d \n", parsed_instruction.type);
     if (parsed_instruction.format == R)
     {
         uint8_t rs = (raw_instruction >> 21) & 0x1F;
@@ -121,29 +124,40 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
                 printf("ERROR: Addition overflow for registers %d and %d", rs, rt);
                 exit(-1);
             };
+            printf("ADD: %d %d \n", rs_value, rt_value);
             int32_t sum = rs_value + rt_value;
+            printf("Sum: %d \n", sum);
             set_memory(&cpu->memory, rd, sum);
+            cpu->program_counter += 1;
             break;
         }
         case ADDU:
         {
             int32_t sum = rs_value + rt_value;
             set_memory(&cpu->memory, rd, sum);
+
+            cpu->program_counter += 1;
+            break;
         }
         case AND:
         {
             int32_t result = rs_value & rt_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case JALR:
         {
             // 31 refers to $ra register
             set_memory(&cpu->memory, 31, cpu->program_counter + 4);
             cpu->program_counter = rs_value;
+            break;
         }
         case JR:
         {
             cpu->program_counter = rs_value;
+            break;
         }
         case MUL:
         {
@@ -154,16 +168,25 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             }
             int32_t product = rs_value * rt_value;
             set_memory(&cpu->memory, rd, product);
+
+            cpu->program_counter += 1;
+            break;
         }
         case NOR:
         {
             int32_t result = !(rt_value | rs_value);
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case OR:
         {
             int32_t result = (rt_value | rs_value);
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SLT:
         {
@@ -175,6 +198,9 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             {
                 set_memory(&cpu->memory, rd, 0);
             }
+
+            cpu->program_counter += 1;
+            break;
         }
 
         case SLTU:
@@ -187,32 +213,50 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             {
                 set_memory(&cpu->memory, rd, 0);
             }
+
+            cpu->program_counter += 1;
+            break;
         }
         case SLL:
         {
             int32_t result = rt_value << shamt;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SLLV:
         {
             int32_t result = rt_value << rs_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SRA:
         {
             // borde göra unsigned right shift men finns endast vanlig right shift
             int32_t result = rt_value >> shamt;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SRL:
         {
             int32_t result = rt_value >> shamt;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SRLV:
         {
             int32_t result = rt_value >> rs_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SUB:
         {
@@ -223,16 +267,25 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             }
             int32_t result = rs_value - rt_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SUBU:
         {
             int32_t result = rs_value - rt_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case XOR:
         {
             int32_t result = rs_value ^ rt_value;
             set_memory(&cpu->memory, rd, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         default:
             break;
@@ -245,7 +298,7 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
 
         int16_t immediate = raw_instruction & ((1U << 16) - 1);
         int32_t rs_value = load_memory(&cpu->memory, rs);
-        int32_t rt_value = load_memory(&cpu->memory, rs);
+        int32_t rt_value = load_memory(&cpu->memory, rt);
 
         switch (parsed_instruction.type)
         {
@@ -258,16 +311,25 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             };
             int32_t sum = rs_value + sign_extended(immediate);
             set_memory(&cpu->memory, rt, sum);
+
+            cpu->program_counter += 1;
+            break;
         }
         case ADDIU:
         {
             int32_t sum = rs_value + sign_extended(immediate);
             set_memory(&cpu->memory, rt, sum);
+
+            cpu->program_counter += 1;
+            break;
         }
         case ANDI:
         {
             int32_t result = rs_value & sign_extended(immediate);
             set_memory(&cpu->memory, rt, result);
+
+            cpu->program_counter += 1;
+            break;
         }
         case BEQ:
         {
@@ -276,6 +338,11 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
                 uint32_t bta = cpu->program_counter + 4 + (sign_extended(immediate) * 4);
                 cpu->program_counter = bta;
             }
+            else
+            {
+                cpu->program_counter += 1;
+            }
+            break;
         }
         case BNE:
         {
@@ -284,6 +351,11 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
                 uint32_t bta = cpu->program_counter + 4 + (sign_extended(immediate) * 4);
                 cpu->program_counter = bta;
             }
+            else
+            {
+                cpu->program_counter += 1;
+            }
+            break;
         }
         case LB:
         {
@@ -291,6 +363,9 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint8_t value = cpu->ram[address];
 
             set_memory(&cpu->memory, rt, sign_extended_u8(value));
+
+            cpu->program_counter += 1;
+            break;
         }
         case LBU:
         {
@@ -298,6 +373,9 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint8_t value = cpu->ram[address];
 
             set_memory(&cpu->memory, rt, zero_extension(value));
+
+            cpu->program_counter += 1;
+            break;
         }
         case LUI:
         {
@@ -305,6 +383,10 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             int32_t result = (immediate << 16) | zeroes;
 
             set_memory(&cpu->memory, rt, result);
+
+            cpu->program_counter += 1;
+
+            break;
         }
         case LW:
         {
@@ -312,12 +394,19 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint8_t value = cpu->ram[address];
 
             set_memory(&cpu->memory, rt, value);
+
+            cpu->program_counter += 1;
+
+            break;
         }
         case ORI:
         {
             int32_t value = rs_value | zero_extension_u16(immediate);
 
             set_memory(&cpu->memory, rt, value);
+
+            cpu->program_counter += 1;
+            break;
         }
         case SLTI:
         {
@@ -330,6 +419,9 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
 
                 set_memory(&cpu->memory, rt, 0);
             }
+
+            cpu->program_counter += 1;
+            break;
         }
         case SLTIU:
         {
@@ -341,17 +433,26 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             {
                 set_memory(&cpu->memory, rt, 0);
             }
+
+            cpu->program_counter += 1;
+            break;
         }
 
         case SB:
         {
             int address = rs_value + sign_extended(immediate);
             cpu->ram[address] = rt_value;
+
+            cpu->program_counter += 1;
+            break;
         }
         case SW:
         {
             int address = rs_value + sign_extended(immediate);
             cpu->ram[address] = rt_value;
+
+            cpu->program_counter += 1;
+            break;
         }
 
         default:
@@ -371,8 +472,11 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint32_t pc_bits = (cpu->program_counter >> 28) & 0xF;
             Label l = {};
             find_label(&l, cpu, address);
+            printf("Label address: %d \n", address);
             uint32_t jta = (pc_bits << 28) | (l.address << 2);
-            cpu->program_counter = jta;
+            printf("JTA: %d \n", jta / 16);
+            cpu->program_counter = jta / 16;
+            break;
         }
         case JAL:
         {
@@ -382,6 +486,7 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint32_t jta = (pc_bits << 28) | (l.address << 2);
             cpu->program_counter = jta;
             set_memory(&cpu->memory, 31, cpu->program_counter + 4);
+            break;
         }
 
         default:
