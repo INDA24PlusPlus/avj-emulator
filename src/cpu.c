@@ -43,6 +43,15 @@ int subtraction_overflow(int32_t a, int32_t b)
     }
 }
 
+void show_registers(CPU *cpu)
+{
+    printf("Registers: \n");
+    for (int i = 0; i < 32; i++)
+    {
+        printf("Register %d: %d \n", i, load_memory(&cpu->memory, i));
+    }
+}
+
 void find_label(Label *label, CPU *cpu, uint32_t label_identifier)
 {
 
@@ -93,7 +102,9 @@ void run_program(CPU *cpu)
 {
     while (cpu->program_counter < cpu->program_length)
     {
+        printf("Instruction ran \n");
         execute_instruction(cpu, cpu->program[cpu->program_counter]);
+        show_registers(cpu);
         /* int32_t result = load_memory(&cpu->memory, 9);
         printf("Result: %d \n", result); */
     }
@@ -102,8 +113,6 @@ void run_program(CPU *cpu)
 void execute_instruction(CPU *cpu, instruction_t raw_instruction)
 {
     Instruction parsed_instruction = match_op_code(raw_instruction);
-    printf("Program counter: %d \n", cpu->program_counter);
-    printf("Parsed instruction: %d \n", parsed_instruction.type);
     if (parsed_instruction.format == R)
     {
         uint8_t rs = (raw_instruction >> 21) & 0x1F;
@@ -124,9 +133,7 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
                 printf("ERROR: Addition overflow for registers %d and %d", rs, rt);
                 exit(-1);
             };
-            printf("ADD: %d %d \n", rs_value, rt_value);
             int32_t sum = rs_value + rt_value;
-            printf("Sum: %d \n", sum);
             set_memory(&cpu->memory, rd, sum);
             cpu->program_counter += 1;
             break;
@@ -472,9 +479,7 @@ void execute_instruction(CPU *cpu, instruction_t raw_instruction)
             uint32_t pc_bits = (cpu->program_counter >> 28) & 0xF;
             Label l = {};
             find_label(&l, cpu, address);
-            printf("Label address: %d \n", address);
             uint32_t jta = (pc_bits << 28) | (l.address << 2);
-            printf("JTA: %d \n", jta / 16);
             cpu->program_counter = jta / 16;
             break;
         }

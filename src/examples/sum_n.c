@@ -8,7 +8,7 @@
 
     # Initialize registers
     lui $t0, 0
-    ori $t0, $t0, 5
+    ori $t0, $t0, N
 
     addi $t1, $zero, 0
     addi $t2, $zero, 0
@@ -22,10 +22,23 @@ exit:
 sll $zero,$zero,0
 */
 
+instruction_t generate_ori_instruction(uint16_t N)
+{
+    uint32_t opcode = 0x0D;       // Opcode for `ori` is 13 in decimal or 0x0D in hex
+    uint32_t rs = 8;              // Source register $t0 (register number 8)
+    uint32_t rt = 8;              // Target register $t0 (register number 8)
+
+    // Construct the instruction by shifting and combining parts
+    uint32_t instruction = (opcode << 26) | (rs << 21) | (rt << 16) | (N & 0xFFFF);
+
+    return instruction;
+}
+
 void run()
 {
     instruction_t i0 = 0x3C080000;
-    instruction_t i1 = 0x35080005;
+    // N = 6 (kan såklart ändras)
+    instruction_t i1 = generate_ori_instruction(6);
     instruction_t i2 = 0x20090000;
     instruction_t i3 = 0x200A0000;
 
@@ -62,5 +75,5 @@ void run()
     run_program(&cpu);
     // After we have run the program
     int32_t result = load_memory(&(&cpu)->memory, 10);
-    printf("Result after loops: %d \n", result);
+    printf("Result of sum: %d \n", result);
 }
